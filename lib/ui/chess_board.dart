@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../game/chess_rules.dart';
+
+import '../game/chess_game.dart';
 
 const files = 'abcdefgh';
-
-String indexToSquare(int index) {
-  final row = index ~/ 8;
-  final column = index % 8;
-
-  final file = files[column];
-  final rank = 8 - row;
-
-  return '$file$rank';
-}
 
 class ChessBoard extends StatefulWidget {
   const ChessBoard({super.key});
@@ -23,43 +14,7 @@ class ChessBoard extends StatefulWidget {
 
 class _ChessBoardState extends State<ChessBoard> {
   int? selectedIndex;
-  final Map<int, String> pieces = {
-    0: 'black_rook',
-    1: 'black_knight',
-    2: 'black_bishop',
-    3: 'black_queen',
-    4: 'black_king',
-    5: 'black_bishop',
-    6: 'black_knight',
-    7: 'black_rook',
-
-    8: 'black_pawn',
-    9: 'black_pawn',
-    10: 'black_pawn',
-    11: 'black_pawn',
-    12: 'black_pawn',
-    13: 'black_pawn',
-    14: 'black_pawn',
-    15: 'black_pawn',
-
-    48: 'white_pawn',
-    49: 'white_pawn',
-    50: 'white_pawn',
-    51: 'white_pawn',
-    52: 'white_pawn',
-    53: 'white_pawn',
-    54: 'white_pawn',
-    55: 'white_pawn',
-
-    56: 'white_rook',
-    57: 'white_knight',
-    58: 'white_bishop',
-    59: 'white_queen',
-    60: 'white_king',
-    61: 'white_bishop',
-    62: 'white_knight',
-    63: 'white_rook',
-  };
+  final ChessGame chessGame = ChessGame();
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +31,7 @@ class _ChessBoardState extends State<ChessBoard> {
           final row = index ~/ 8;
           final column = index % 8;
           final isLightSquare = (row + column) % 2 == 0;
-
-          final piece = pieces[index];
+          final piece = chessGame.pieceAt(index);
           final isSelected = selectedIndex == index;
 
           final rank = 8 - row;
@@ -106,46 +60,7 @@ class _ChessBoardState extends State<ChessBoard> {
                   return;
                 }
 
-                final movingPiece = pieces[sourceIndex];
-
-                if (movingPiece != null) {
-                  var canMove = true;
-
-                  if (movingPiece.endsWith('_pawn')) {
-                    canMove = isPawnMoveValid(
-                      sourceIndex: sourceIndex,
-                      destinationIndex: index,
-                      piece: movingPiece,
-                      pieces: pieces,
-                    );
-                  } else if (movingPiece.endsWith('_rook')) {
-                    canMove = isRookMoveValid(
-                      sourceIndex: sourceIndex,
-                      destinationIndex: index,
-                      piece: movingPiece,
-                      pieces: pieces,
-                    );                    
-                  } else if (movingPiece.endsWith('_knight')) {
-                    canMove = isKnightMoveValid(
-                      sourceIndex: sourceIndex,
-                      destinationIndex: index,
-                      piece: movingPiece,
-                      pieces: pieces,
-                    );
-                  } else if (movingPiece.endsWith('_bishop')) {
-                    canMove = isBishopMoveValid(
-                      sourceIndex: sourceIndex,
-                      destinationIndex: index,
-                      piece: movingPiece,
-                      pieces: pieces,
-                    );
-                  }
-
-                  if (canMove) {
-                    pieces[index] = movingPiece;
-                    pieces.remove(sourceIndex);
-                  }
-                }
+                chessGame.tryMove(sourceIndex, index);
 
                 selectedIndex = null;
               });
