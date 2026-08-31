@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../game/chess_rules.dart';
 
 const files = 'abcdefgh';
 
@@ -22,44 +23,46 @@ class ChessBoard extends StatefulWidget {
 
 class _ChessBoardState extends State<ChessBoard> {
   int? selectedIndex;
+  final Map<int, String> pieces = {
+    0: 'black_rook',
+    1: 'black_knight',
+    2: 'black_bishop',
+    3: 'black_queen',
+    4: 'black_king',
+    5: 'black_bishop',
+    6: 'black_knight',
+    7: 'black_rook',
+
+    8: 'black_pawn',
+    9: 'black_pawn',
+    10: 'black_pawn',
+    11: 'black_pawn',
+    12: 'black_pawn',
+    13: 'black_pawn',
+    14: 'black_pawn',
+    15: 'black_pawn',
+
+    48: 'white_pawn',
+    49: 'white_pawn',
+    50: 'white_pawn',
+    51: 'white_pawn',
+    52: 'white_pawn',
+    53: 'white_pawn',
+    54: 'white_pawn',
+    55: 'white_pawn',
+
+    56: 'white_rook',
+    57: 'white_knight',
+    58: 'white_bishop',
+    59: 'white_queen',
+    60: 'white_king',
+    61: 'white_bishop',
+    62: 'white_knight',
+    63: 'white_rook',
+  };
 
   @override
   Widget build(BuildContext context) {
-    const pieces = <int, String>{
-      00: 'black_rook',
-      01: 'black_knight',
-      02: 'black_bishop',
-      03: 'black_queen',
-      04: 'black_king',
-      05: 'black_bishop',
-      06: 'black_knight',
-      07: 'black_rook',
-      08: 'black_pawn',
-      09: 'black_pawn',
-      10: 'black_pawn',
-      11: 'black_pawn',
-      12: 'black_pawn',
-      13: 'black_pawn',
-      14: 'black_pawn',
-      15: 'black_pawn',
-      48: 'white_pawn',
-      49: 'white_pawn',
-      50: 'white_pawn',
-      51: 'white_pawn',
-      52: 'white_pawn',
-      53: 'white_pawn',
-      54: 'white_pawn',
-      55: 'white_pawn',
-      56: 'white_rook',
-      57: 'white_knight',
-      58: 'white_bishop',
-      59: 'white_queen',
-      60: 'white_king',
-      61: 'white_bishop',
-      62: 'white_knight',
-      63: 'white_rook',
-    };
-
     return AspectRatio(
       aspectRatio: 1,
       child: GridView.builder(
@@ -86,7 +89,65 @@ class _ChessBoardState extends State<ChessBoard> {
           return GestureDetector(
             onTap: () {
               setState(() {
-                selectedIndex = piece != null ? index : null;
+                // Aucune pièce sélectionnée : on essaie d'en sélectionner une.
+                if (selectedIndex == null) {
+                  if (piece != null) {
+                    selectedIndex = index;
+                  }
+                  return;
+                }
+
+                // Une pièce est déjà sélectionnée.
+                final sourceIndex = selectedIndex!;
+
+                // Si on retouche la même case, on annule la sélection.
+                if (sourceIndex == index) {
+                  selectedIndex = null;
+                  return;
+                }
+
+                final movingPiece = pieces[sourceIndex];
+
+                if (movingPiece != null) {
+                  var canMove = true;
+
+                  if (movingPiece.endsWith('_pawn')) {
+                    canMove = isPawnMoveValid(
+                      sourceIndex: sourceIndex,
+                      destinationIndex: index,
+                      piece: movingPiece,
+                      pieces: pieces,
+                    );
+                  } else if (movingPiece.endsWith('_rook')) {
+                    canMove = isRookMoveValid(
+                      sourceIndex: sourceIndex,
+                      destinationIndex: index,
+                      piece: movingPiece,
+                      pieces: pieces,
+                    );                    
+                  } else if (movingPiece.endsWith('_knight')) {
+                    canMove = isKnightMoveValid(
+                      sourceIndex: sourceIndex,
+                      destinationIndex: index,
+                      piece: movingPiece,
+                      pieces: pieces,
+                    );
+                  } else if (movingPiece.endsWith('_bishop')) {
+                    canMove = isBishopMoveValid(
+                      sourceIndex: sourceIndex,
+                      destinationIndex: index,
+                      piece: movingPiece,
+                      pieces: pieces,
+                    );
+                  }
+
+                  if (canMove) {
+                    pieces[index] = movingPiece;
+                    pieces.remove(sourceIndex);
+                  }
+                }
+
+                selectedIndex = null;
               });
             },
             child: Container(
