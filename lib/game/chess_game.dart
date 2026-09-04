@@ -3,25 +3,59 @@ import 'package:chess/chess.dart';
 class ChessGame {
   final Chess game = Chess();
 
-bool tryMove(int sourceIndex, int destinationIndex) {
-  final from = indexToSquare(sourceIndex);
-  final to = indexToSquare(destinationIndex);
-
-  final piece = game.get(from);
-
-  final move = <String, String>{
-    'from': from,
-    'to': to,
-  };
-
-  if (piece != null &&
-      piece.type == Chess.PAWN &&
-      (to.endsWith('8') || to.endsWith('1'))) {
-    move['promotion'] = 'q';
+  void resetGame() {
+    game.reset();
   }
 
-  return game.move(move);
-}
+  void undoMove() {
+    game.undo();
+  }
+
+  List<String> moveHistory() {
+    return game.san_moves().whereType<String>().toList();
+  }
+
+  Set<int> legalMovesFrom(int sourceIndex) {
+    final square = indexToSquare(sourceIndex);
+
+    final moves = game.generate_moves({'square': square});
+
+    final destinations = <int>{};
+
+    for (final move in moves) {
+      destinations.add(squareToIndex(move.toAlgebraic));
+    }
+
+    return destinations;
+  }
+
+  bool canSelectPiece(int index) {
+    final square = indexToSquare(index);
+    final piece = game.get(square);
+
+    if (piece == null) {
+      return false;
+    }
+
+    return piece.color == game.turn;
+  }
+
+  bool tryMove(int sourceIndex, int destinationIndex) {
+    final from = indexToSquare(sourceIndex);
+    final to = indexToSquare(destinationIndex);
+
+    final piece = game.get(from);
+
+    final move = <String, String>{'from': from, 'to': to};
+
+    if (piece != null &&
+        piece.type == Chess.PAWN &&
+        (to.endsWith('8') || to.endsWith('1'))) {
+      move['promotion'] = 'q';
+    }
+
+    return game.move(move);
+  }
 
   String? pieceAt(int index) {
     final square = indexToSquare(index);
@@ -31,8 +65,7 @@ bool tryMove(int sourceIndex, int destinationIndex) {
       return null;
     }
 
-    final color =
-        piece.color == Color.WHITE ? 'white' : 'black';
+    final color = piece.color == Color.WHITE ? 'white' : 'black';
 
     String type;
 
@@ -63,5 +96,17 @@ bool tryMove(int sourceIndex, int destinationIndex) {
     final rank = 8 - row;
 
     return '$file$rank';
+  }
+
+  int squareToIndex(String square) {
+    const files = 'abcdefgh';
+
+    final file = square[0];
+    final rank = int.parse(square[1]);
+
+    final column = files.indexOf(file);
+    final row = 8 - rank;
+
+    return row * 8 + column;
   }
 }
