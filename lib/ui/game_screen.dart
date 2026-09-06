@@ -111,61 +111,59 @@ class _GameScreenState extends State<GameScreen> {
 
             const SizedBox(height: 12),
 
-            SizedBox(
-              height: 55,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: null,
-                    icon: const Icon(Icons.chevron_left),
-                  ),
-                  const SizedBox(height: 12),
+Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    ElevatedButton(
+      onPressed: confirmUndo,
+      child: const Text('Undo'),
+    ),
+    const SizedBox(width: 12),
+    ElevatedButton(
+      onPressed: confirmReset,
+      child: const Text('Reset'),
+    ),
+  ],
+),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: confirmUndo,
-                        child: const Text('Undo'),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: confirmReset,
-                        child: const Text('Reset'),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(previousMove.isEmpty ? '-' : previousMove),
-                    ),
-                  ),
+const SizedBox(height: 12),
 
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        currentMove.isEmpty ? 'Début' : currentMove,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Center(
-                      child: Text(nextMove.isEmpty ? '-' : nextMove),
-                    ),
-                  ),
-
-                  IconButton(
-                    onPressed: null,
-                    icon: const Icon(Icons.chevron_right),
-                  ),
-                ],
-              ),
+SizedBox(
+  height: 55,
+  child: Row(
+    children: [
+      IconButton(
+        onPressed: null,
+        icon: const Icon(Icons.chevron_left),
+      ),
+      Expanded(
+        child: Center(
+          child: Text(previousMove.isEmpty ? '-' : previousMove),
+        ),
+      ),
+      Expanded(
+        child: Center(
+          child: Text(
+            currentMove.isEmpty ? 'Début' : currentMove,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
+          ),
+        ),
+      ),
+      Expanded(
+        child: Center(
+          child: Text(nextMove.isEmpty ? '-' : nextMove),
+        ),
+      ),
+      IconButton(
+        onPressed: null,
+        icon: const Icon(Icons.chevron_right),
+      ),
+    ],
+  ),
+),
           ],
         ),
       ),

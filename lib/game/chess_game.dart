@@ -40,22 +40,41 @@ class ChessGame {
     return piece.color == game.turn;
   }
 
-  bool tryMove(int sourceIndex, int destinationIndex) {
-    final from = indexToSquare(sourceIndex);
-    final to = indexToSquare(destinationIndex);
+bool isPromotionMove(int sourceIndex, int destinationIndex) {
+  final from = indexToSquare(sourceIndex);
+  final to = indexToSquare(destinationIndex);
 
-    final piece = game.get(from);
+  final piece = game.get(from);
 
-    final move = <String, String>{'from': from, 'to': to};
+  return piece != null &&
+      piece.type == Chess.PAWN &&
+      (to.endsWith('8') || to.endsWith('1'));
+}
 
-    if (piece != null &&
-        piece.type == Chess.PAWN &&
-        (to.endsWith('8') || to.endsWith('1'))) {
-      move['promotion'] = 'q';
-    }
+bool tryMove(
+  int sourceIndex,
+  int destinationIndex, {
+  String? promotion,
+}) {
+  final from = indexToSquare(sourceIndex);
+  final to = indexToSquare(destinationIndex);
 
-    return game.move(move);
+  if (isPromotionMove(sourceIndex, destinationIndex) &&
+      promotion == null) {
+    return false;
   }
+
+  final move = <String, String>{
+    'from': from,
+    'to': to,
+  };
+
+  if (promotion != null) {
+    move['promotion'] = promotion;
+  }
+
+  return game.move(move);
+}
 
   String? pieceAt(int index) {
     final square = indexToSquare(index);

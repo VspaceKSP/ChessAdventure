@@ -38,6 +38,161 @@ class _ChessBoardState extends State<ChessBoard> {
     }
   }
 
+  void _clearInteraction() {
+    if (!mounted) return;
+
+    setState(() {
+      selectedIndex = null;
+      hoveredTargetIndex = null;
+      legalMoveIndexes.clear();
+    });
+  }
+
+  Future<String?> _choosePromotionPiece({
+    required int sourceIndex,
+    required int destinationIndex,
+    required double squareSize,
+  }) {
+    final pawn = widget.chessGame.pieceAt(sourceIndex);
+
+    final color = pawn != null && pawn.startsWith('white_') ? 'white' : 'black';
+
+    final renderObject = context.findRenderObject();
+    final boardBox = renderObject is RenderBox ? renderObject : null;
+
+    final boardOffset = boardBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+
+    final boardHeight = boardBox?.size.height ?? squareSize * 8;
+
+    final column = destinationIndex % 8;
+    final destinationRow = destinationIndex ~/ 8;
+
+    final left = boardOffset.dx + column * squareSize;
+
+    final top = destinationRow == 0
+        ? boardOffset.dy
+        : boardOffset.dy + boardHeight - squareSize * 4;
+
+    return showGeneralDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Annuler la promotion',
+      barrierColor: Colors.black.withValues(alpha: 0.70),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Stack(
+          children: [
+            Positioned(
+              left: left,
+              top: top,
+              child: Column(
+                children: [
+                  _buildPromotionOption(
+                    dialogContext: dialogContext,
+                    color: color,
+                    type: 'queen',
+                    code: 'q',
+                    squareSize: squareSize,
+                  ),
+                  _buildPromotionOption(
+                    dialogContext: dialogContext,
+                    color: color,
+                    type: 'rook',
+                    code: 'r',
+                    squareSize: squareSize,
+                  ),
+                  _buildPromotionOption(
+                    dialogContext: dialogContext,
+                    color: color,
+                    type: 'bishop',
+                    code: 'b',
+                    squareSize: squareSize,
+                  ),
+                  _buildPromotionOption(
+                    dialogContext: dialogContext,
+                    color: color,
+                    type: 'knight',
+                    code: 'n',
+                    squareSize: squareSize,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPromotionOption({
+    required BuildContext dialogContext,
+    required String color,
+    required String type,
+    required String code,
+    required double squareSize,
+  }) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(dialogContext).pop(code);
+        },
+        child: Container(
+          width: squareSize,
+          height: squareSize,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black, width: 2),
+          ),
+          child: SvgPicture.asset(
+            'assets/pieces/classic/${color}_$type.svg',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _playMove(
+    int sourceIndex,
+    int destinationIndex,
+    double squareSize,
+  ) async {
+    if (!legalMoveIndexes.contains(destinationIndex)) {
+      _clearInteraction();
+      return;
+    }
+
+    String? promotion;
+
+    if (widget.chessGame.isPromotionMove(sourceIndex, destinationIndex)) {
+            promotion = await _choosePromotionPiece(
+        sourceIndex: sourceIndex,
+        destinationIndex: destinationIndex,
+        squareSize: squareSize,
+      );
+
+      if (!mounted) return;
+
+      if (promotion == null) {
+        _clearInteraction();
+        return;
+      }
+    }
+
+    final movePlayed = widget.chessGame.tryMove(
+      sourceIndex,
+      destinationIndex,
+      promotion: promotion,
+    );
+
+    if (movePlayed) {
+      widget.onGameChanged();
+    }
+
+    _clearInteraction();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
@@ -101,62 +256,35 @@ class _ChessBoardState extends State<ChessBoard> {
                       }
                     },
 
-                    onAcceptWithDetails: (details) {
+                    onAcceptWithDetails: (details) async {
                       final sourceIndex = details.data;
 
-                      final movePlayed = widget.chessGame.tryMove(
-                        sourceIndex,
-                        index,
-                      );
-
-                      if (movePlayed) {
-                        widget.onGameChanged();
-                      }
-
-                      setState(() {
-                        selectedIndex = null;
-                        hoveredTargetIndex = null;
-                        legalMoveIndexes.clear();
-                      });
+                      await _playMove(sourceIndex, index, squareSize);
                     },
 
                     builder: (context, candidateData, rejectedData) {
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (selectedIndex == null) {
-                              if (canInteractWithPiece) {
+                        onTap: () async {
+                          if (selectedIndex == null) {
+                            if (canInteractWithPiece) {
+                              setState(() {
                                 selectedIndex = index;
-
                                 legalMoveIndexes = widget.chessGame
                                     .legalMovesFrom(index);
-                              }
-
-                              return;
+                              });
                             }
 
-                            final sourceIndex = selectedIndex!;
+                            return;
+                          }
 
-                            if (sourceIndex == index) {
-                              selectedIndex = null;
-                              hoveredTargetIndex = null;
-                              legalMoveIndexes.clear();
-                              return;
-                            }
+                          final sourceIndex = selectedIndex!;
 
-                            final movePlayed = widget.chessGame.tryMove(
-                              sourceIndex,
-                              index,
-                            );
+                          if (sourceIndex == index) {
+                            _clearInteraction();
+                            return;
+                          }
 
-                            if (movePlayed) {
-                              widget.onGameChanged();
-                            }
-
-                            selectedIndex = null;
-                            hoveredTargetIndex = null;
-                            legalMoveIndexes.clear();
-                          });
+                          await _playMove(sourceIndex, index, squareSize);
                         },
 
                         child: Container(
