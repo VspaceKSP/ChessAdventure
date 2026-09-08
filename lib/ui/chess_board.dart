@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../game/chess_game.dart';
+import '../theme/chess_board_palette.dart';
 
 const files = 'abcdefgh';
 
@@ -9,27 +10,67 @@ class ChessBoard extends StatefulWidget {
   final ChessGame chessGame;
   final VoidCallback onGameChanged;
   final int interactionRevision;
+  final ChessBoardPalette palette;
 
   const ChessBoard({
     super.key,
     required this.chessGame,
     required this.onGameChanged,
     required this.interactionRevision,
+    required this.palette,
   });
 
   @override
   State<ChessBoard> createState() => _ChessBoardState();
 }
 
-class _ChessBoardState extends State<ChessBoard> {
+class _ChessBoardState extends State<ChessBoard>
+    with SingleTickerProviderStateMixin {
   int? selectedIndex;
   int? hoveredTargetIndex;
 
+  void _syncCheckAnimation() {
+    final shouldBlink = widget.chessGame.isInCheck;
+
+    if (shouldBlink) {
+      if (!_checkBlinkController.isAnimating) {
+        _checkBlinkController.repeat(reverse: true);
+      }
+    } else {
+      _checkBlinkController.stop();
+      _checkBlinkController.value = 0.0;
+    }
+  }
+
   Set<int> legalMoveIndexes = {};
+  late final AnimationController _checkBlinkController;
+  late final Animation<double> _checkBlinkAnimation;
+  @override
+  void initState() {
+    super.initState();
+
+    _checkBlinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _checkBlinkAnimation = Tween<double>(begin: 0.25, end: 0.75).animate(
+      CurvedAnimation(parent: _checkBlinkController, curve: Curves.easeInOut),
+    );
+    _syncCheckAnimation();
+  }
+
+  @override
+  void dispose() {
+    _checkBlinkController.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant ChessBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    _syncCheckAnimation();
 
     if (oldWidget.interactionRevision != widget.interactionRevision) {
       selectedIndex = null;
@@ -166,7 +207,7 @@ class _ChessBoardState extends State<ChessBoard> {
     String? promotion;
 
     if (widget.chessGame.isPromotionMove(sourceIndex, destinationIndex)) {
-            promotion = await _choosePromotionPiece(
+      promotion = await _choosePromotionPiece(
         sourceIndex: sourceIndex,
         destinationIndex: destinationIndex,
         squareSize: squareSize,
@@ -205,6 +246,11 @@ class _ChessBoardState extends State<ChessBoard> {
           // L'indicateur dépasse légèrement de la case.
           final targetIndicatorSize = squareSize * 1.60;
 
+          final lastMoveFromIndex = widget.chessGame.lastMoveFromIndex;
+          final lastMoveToIndex = widget.chessGame.lastMoveToIndex;
+          final checkedKingIndex = widget.chessGame.checkedKingIndex;
+          final isCheckmate = widget.chessGame.isCheckmate;
+
           return Stack(
             clipBehavior: Clip.none,
             children: [
@@ -225,6 +271,10 @@ class _ChessBoardState extends State<ChessBoard> {
 
                   final isSelected = selectedIndex == index;
                   final isLegalMove = legalMoveIndexes.contains(index);
+
+                  final isLastMoveFrom = lastMoveFromIndex == index;
+                  final isLastMoveTo = lastMoveToIndex == index;
+                  final isCheckedKing = checkedKingIndex == index;
 
                   final rank = 8 - row;
                   final file = files[column];
@@ -289,13 +339,50 @@ class _ChessBoardState extends State<ChessBoard> {
 
                         child: Container(
                           color: isSelected
-                              ? const Color.fromARGB(255, 251, 223, 130)
+                              ? widget.palette.selectedSquare
                               : isLightSquare
-                              ? const Color(0xFFF4EADE)
-                              : const Color(0xFF2988BC),
+                              ? widget.palette.lightSquare
+                              : widget.palette.darkSquare,
 
                           child: Stack(
                             children: [
+                              if (isLastMoveFrom)
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      color: widget.palette.lastMoveFrom,
+                                    ),
+                                  ),
+                                ),
+
+                              if (isLastMoveTo)
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      color: widget.palette.lastMoveTo,
+                                    ),
+                                  ),
+                                ),
+
+                              if (isCheckedKing)
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: AnimatedBuilder(
+                                      animation: _checkBlinkAnimation,
+                                      builder: (context, child) {
+                                        final checkColor = isCheckmate
+                                            ? widget.palette.mateSquare
+                                            : widget.palette.checkSquare;
+
+                                        return Container(
+                                          color: checkColor.withValues(
+                                            alpha: _checkBlinkAnimation.value,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
                               if (piece != null)
                                 Center(
                                   child: Draggable<int>(
@@ -365,9 +452,7 @@ class _ChessBoardState extends State<ChessBoard> {
                                     height: 14,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Colors.black.withValues(
-                                        alpha: 0.25,
-                                      ),
+                                      color: widget.palette.legalMoveDot,
                                     ),
                                   ),
                                 ),
@@ -382,8 +467,8 @@ class _ChessBoardState extends State<ChessBoard> {
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                       color: isLightSquare
-                                          ? const Color(0xFF2988BC)
-                                          : const Color(0xFFF4EADE),
+                                          ? widget.palette.darkSquare
+                                          : widget.palette.lightSquare,
                                     ),
                                   ),
                                 ),
@@ -426,7 +511,7 @@ class _ChessBoardState extends State<ChessBoard> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.40),
+                          color: widget.palette.dragTargetBorder,
                           width: 4,
                         ),
                       ),

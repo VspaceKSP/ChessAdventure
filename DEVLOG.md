@@ -55,7 +55,12 @@ Le premier MVP doit contenir :
 - Fermeture de la boîte sans choix = coup annulé et pion remis sur sa case.
 - Historique élémentaire des coups.
 - Boutons Undo et Reset avec confirmation.
-- Analyse Flutter sans problème signalé.
+- Palette visuelle centralisée dans `ChessBoardPalette`.
+- Coordonnées de l’échiquier liées aux couleurs de la palette.
+- Surbrillance de la case de départ et de la case d’arrivée du dernier coup.
+- Détection du roi en échec et de l’échec et mat.
+- Case du roi en échec animée en rouge avec une animation arrêtée hors échec.
+- Analyse Flutter à confirmer après les dernières modifications.
 
 ### Architecture actuelle
 
@@ -78,27 +83,13 @@ Cette séparation va dans le sens de la vision : Flutter affiche le jeu, tandis 
 
 ## Prochaine petite étape
 
-Remettre la disposition de `GameScreen` dans cet ordre :
+Après la validation visuelle des dernières briques, choisir une seule direction :
 
-1. Échiquier.
-2. Rangée contenant Undo et Reset.
-3. Rangée contenant le coup précédent, le coup actuel et le coup suivant.
+- ajouter l’orientation du plateau et le mode permettant de jouer les Noirs;
+- améliorer la navigation dans l’historique;
+- commencer une première quête très simple.
 
-Cette étape permettra de travailler concrètement avec :
-
-- `Column`, qui place les widgets verticalement;
-- `Row`, qui place les widgets horizontalement;
-- `SizedBox`, qui ajoute un espace ou impose une dimension;
-- `Expanded`, qui partage l’espace disponible entre plusieurs widgets.
-
-Après la modification, vérifier :
-
-- que l’échiquier conserve la bonne taille;
-- que les boutons sont centrés;
-- que l’historique tient sur une seule ligne;
-- que le déplacement des pièces fonctionne toujours;
-- que Undo et Reset fonctionnent toujours;
-- que l’affichage est propre sur le téléphone.
+Le moteur adverse complet restera une étape beaucoup plus tardive, après la base de jeu et l’expérience joueur.
 
 ## Étapes envisagées ensuite
 
@@ -119,6 +110,8 @@ Une seule étape sera choisie à la fois.
 - Ajout des coups légaux, de l’état de la partie et de la promotion.
 - Finalisation du glisser-déposer et nettoyage de la structure de l’échiquier.
 - Ajout de la sélection visuelle de la pièce lors d’une promotion.
+- Centralisation des couleurs du plateau dans une palette.
+- Ajout des coordonnées liées à la palette, de la surbrillance du dernier coup et du signal visuel d’échec.
 
 ## Session du 5 septembre 2026
 
@@ -161,3 +154,25 @@ Corriger uniquement la disposition de `GameScreen`, après présentation du chan
 ### Prochaine étape
 
 Choisir entre l’amélioration de la navigation dans l’historique et la création d’une première quête très simple.
+## Session du 8 septembre 2026
+
+### Fait
+
+- Création de `ChessBoardPalette` pour regrouper les couleurs du plateau et des indications visuelles.
+- Intégration de la palette classique dans `GameScreen`.
+- Liaison des coordonnées `a-h` et `1-8` aux couleurs claire et foncée de la palette.
+- Mémorisation des cases de départ et d’arrivée du dernier coup dans `ChessGame`.
+- Ajout de la surbrillance transparente des deux cases du dernier coup.
+- Ajout de la détection de l’échec et de l’échec et mat.
+- Ajout du clignotement rouge sur la case du roi en échec.
+- Ajustement du contrôleur pour qu’il s’anime seulement lorsqu’un échec est présent.
+
+### Validation
+
+- Le diff Git ne contient pas d’espace ou de conflit détecté.
+- L’analyse Flutter doit être relancée après la dernière correction de code.
+- Le test visuel doit confirmer les cases source/destination, l’échec clignotant, Undo et Reset.
+
+### Prochaine étape
+
+Valider le comportement sur le téléphone, puis choisir entre l’orientation du plateau avec le mode Noirs, l’historique ou la première quête.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../game/chess_game.dart';
 import 'chess_board.dart';
+import '../theme/chess_board_palette.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -107,63 +108,64 @@ class _GameScreenState extends State<GameScreen> {
               chessGame: chessGame,
               interactionRevision: boardInteractionRevision,
               onGameChanged: refreshGame,
+              palette: classicChessPalette,
             ),
 
             const SizedBox(height: 12),
 
-Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    ElevatedButton(
-      onPressed: confirmUndo,
-      child: const Text('Undo'),
-    ),
-    const SizedBox(width: 12),
-    ElevatedButton(
-      onPressed: confirmReset,
-      child: const Text('Reset'),
-    ),
-  ],
-),
-
-const SizedBox(height: 12),
-
-SizedBox(
-  height: 55,
-  child: Row(
-    children: [
-      IconButton(
-        onPressed: null,
-        icon: const Icon(Icons.chevron_left),
-      ),
-      Expanded(
-        child: Center(
-          child: Text(previousMove.isEmpty ? '-' : previousMove),
-        ),
-      ),
-      Expanded(
-        child: Center(
-          child: Text(
-            currentMove.isEmpty ? 'Début' : currentMove,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: confirmUndo,
+                  child: const Text('Undo'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: confirmReset,
+                  child: const Text('Reset'),
+                ),
+              ],
             ),
-          ),
-        ),
-      ),
-      Expanded(
-        child: Center(
-          child: Text(nextMove.isEmpty ? '-' : nextMove),
-        ),
-      ),
-      IconButton(
-        onPressed: null,
-        icon: const Icon(Icons.chevron_right),
-      ),
-    ],
-  ),
-),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              height: 55,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(previousMove.isEmpty ? '-' : previousMove),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        currentMove.isEmpty ? 'Début' : currentMove,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(nextMove.isEmpty ? '-' : nextMove),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

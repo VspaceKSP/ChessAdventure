@@ -2,13 +2,39 @@ import 'package:chess/chess.dart';
 
 class ChessGame {
   final Chess game = Chess();
+  int? lastMoveFromIndex;
+  int? lastMoveToIndex;
+
+  bool get isInCheck => game.in_check;
+
+  bool get isCheckmate => game.in_checkmate;
+
+  int? get checkedKingIndex {
+    if (!isInCheck) return null;
+
+    final kingColor = game.turn == Color.WHITE ? 'white' : 'black';
+
+    for (var index = 0; index < 64; index++) {
+      if (pieceAt(index) == '${kingColor}_king') {
+        return index;
+      }
+    }
+
+    return null;
+  }
 
   void resetGame() {
     game.reset();
+
+    lastMoveFromIndex = null;
+    lastMoveToIndex = null;
   }
 
   void undoMove() {
     game.undo();
+
+    lastMoveFromIndex = null;
+    lastMoveToIndex = null;
   }
 
   List<String> moveHistory() {
@@ -40,41 +66,39 @@ class ChessGame {
     return piece.color == game.turn;
   }
 
-bool isPromotionMove(int sourceIndex, int destinationIndex) {
-  final from = indexToSquare(sourceIndex);
-  final to = indexToSquare(destinationIndex);
+  bool isPromotionMove(int sourceIndex, int destinationIndex) {
+    final from = indexToSquare(sourceIndex);
+    final to = indexToSquare(destinationIndex);
 
-  final piece = game.get(from);
+    final piece = game.get(from);
 
-  return piece != null &&
-      piece.type == Chess.PAWN &&
-      (to.endsWith('8') || to.endsWith('1'));
-}
-
-bool tryMove(
-  int sourceIndex,
-  int destinationIndex, {
-  String? promotion,
-}) {
-  final from = indexToSquare(sourceIndex);
-  final to = indexToSquare(destinationIndex);
-
-  if (isPromotionMove(sourceIndex, destinationIndex) &&
-      promotion == null) {
-    return false;
+    return piece != null &&
+        piece.type == Chess.PAWN &&
+        (to.endsWith('8') || to.endsWith('1'));
   }
 
-  final move = <String, String>{
-    'from': from,
-    'to': to,
-  };
+  bool tryMove(int sourceIndex, int destinationIndex, {String? promotion}) {
+    final from = indexToSquare(sourceIndex);
+    final to = indexToSquare(destinationIndex);
 
-  if (promotion != null) {
-    move['promotion'] = promotion;
+    if (isPromotionMove(sourceIndex, destinationIndex) && promotion == null) {
+      return false;
+    }
+
+    final move = <String, String>{'from': from, 'to': to};
+
+    if (promotion != null) {
+      move['promotion'] = promotion;
+    }
+    final movePlayed = game.move(move);
+
+    if (movePlayed) {
+      lastMoveFromIndex = sourceIndex;
+      lastMoveToIndex = destinationIndex;
+    }
+
+    return movePlayed;
   }
-
-  return game.move(move);
-}
 
   String? pieceAt(int index) {
     final square = indexToSquare(index);
