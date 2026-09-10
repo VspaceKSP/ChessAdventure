@@ -15,6 +15,8 @@ class _GameScreenState extends State<GameScreen> {
   final ChessGame chessGame = ChessGame();
   int boardInteractionRevision = 0;
 
+  bool _resultDialogShown = false;
+
   Future<void> confirmUndo() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -44,6 +46,7 @@ class _GameScreenState extends State<GameScreen> {
       if (!mounted) return;
 
       setState(() {
+        _resultDialogShown = false;
         chessGame.undoMove();
         boardInteractionRevision++;
       });
@@ -79,14 +82,70 @@ class _GameScreenState extends State<GameScreen> {
       if (!mounted) return;
 
       setState(() {
+        _resultDialogShown = false;
         chessGame.resetGame();
         boardInteractionRevision++;
       });
     }
   }
 
+  Future<void> _showGameResult(GameResult result) {
+    String title;
+    String message;
+
+    switch (result) {
+      case GameResult.whiteWon:
+        title = 'Les Blancs ont gagné';
+        message = 'Échec et mat.';
+        break;
+
+      case GameResult.blackWon:
+        title = 'Les Noirs ont gagné';
+        message = 'Échec et mat.';
+        break;
+
+      case GameResult.draw:
+        title = 'Partie nulle';
+        message = 'La partie est terminée sans vainqueur.';
+        break;
+    }
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void refreshGame() {
     setState(() {});
+
+    final result = chessGame.result;
+
+    if (result == null || _resultDialogShown) {
+      return;
+    }
+
+    _resultDialogShown = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      _showGameResult(result);
+    });
   }
 
   @override

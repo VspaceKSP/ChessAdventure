@@ -1,5 +1,7 @@
 import 'package:chess/chess.dart';
 
+enum GameResult { whiteWon, blackWon, draw }
+
 class ChessGame {
   final Chess game = Chess();
   int? lastMoveFromIndex;
@@ -8,6 +10,20 @@ class ChessGame {
   bool get isInCheck => game.in_check;
 
   bool get isCheckmate => game.in_checkmate;
+
+  GameResult? get result {
+    if (!game.game_over) {
+      return null;
+    }
+
+    if (game.in_checkmate) {
+      return game.turn == Color.WHITE
+          ? GameResult.blackWon
+          : GameResult.whiteWon;
+    }
+
+    return GameResult.draw;
+  }
 
   int? get checkedKingIndex {
     if (!isInCheck) return null;
